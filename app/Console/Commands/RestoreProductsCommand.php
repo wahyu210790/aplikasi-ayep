@@ -5,13 +5,16 @@ namespace App\Console\Commands;
 use App\Models\Product;
 use App\Models\ProductAdditionalPrice;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Throwable;
 
 class RestoreProductsCommand extends Command
 {
-    protected $signature = 'restore:products {file : Nama file di storage/app/private/backups atau path lengkap ke file JSON backup}';
+    protected $signature = 'restore:products
+        {file : Nama file di folder backup atau path lengkap ke file JSON backup}
+        {--force : Jalankan restore langsung tanpa konfirmasi interaktif}';
 
     protected $description = 'Pulihkan data products dan product_additional_prices dari file backup JSON';
 
@@ -36,7 +39,7 @@ class RestoreProductsCommand extends Command
             return self::FAILURE;
         }
 
-        if (! $this->confirm('PERINGATAN: Proses restore akan mengganti seluruh data barang saat ini dengan data dari file backup. Lanjutkan?', false)) {
+        if (! $this->option('force') && ! $this->confirm('PERINGATAN: Proses restore akan mengganti seluruh data barang saat ini dengan data dari file backup. Lanjutkan?', false)) {
             $this->warn('Proses restore dibatalkan oleh pengguna.');
 
             return self::FAILURE;
@@ -63,6 +66,19 @@ class RestoreProductsCommand extends Command
                         $product->id = (int) $item['id'];
                     }
 
+                    $hasCustomTimestamps = false;
+                    if (! empty($item['created_at'])) {
+                        $product->created_at = Carbon::parse($item['created_at']);
+                        $hasCustomTimestamps = true;
+                    }
+                    if (! empty($item['updated_at'])) {
+                        $product->updated_at = Carbon::parse($item['updated_at']);
+                        $hasCustomTimestamps = true;
+                    }
+                    if ($hasCustomTimestamps) {
+                        $product->timestamps = false;
+                    }
+
                     $product->save();
 
                     $additionalRows = $item['additional_prices'] ?? [];
@@ -73,6 +89,24 @@ class RestoreProductsCommand extends Command
                             'sort_order' => isset($addRow['sort_order']) ? (int) $addRow['sort_order'] : ($idx + 1),
                         ]);
                         $additional->product_id = $product->id;
+
+                        if (isset($addRow['id']) && is_numeric($addRow['id'])) {
+                            $additional->id = (int) $addRow['id'];
+                        }
+
+                        $hasAdditionalTimestamps = false;
+                        if (! empty($addRow['created_at'])) {
+                            $additional->created_at = Carbon::parse($addRow['created_at']);
+                            $hasAdditionalTimestamps = true;
+                        }
+                        if (! empty($addRow['updated_at'])) {
+                            $additional->updated_at = Carbon::parse($addRow['updated_at']);
+                            $hasAdditionalTimestamps = true;
+                        }
+                        if ($hasAdditionalTimestamps) {
+                            $additional->timestamps = false;
+                        }
+
                         $additional->save();
                     }
                 }
@@ -93,6 +127,12 @@ class RestoreProductsCommand extends Command
     {
         if (File::isFile($input)) {
             return $input;
+        }
+
+        $backupDir = (string) config('backup.path', storage_path('app/private/backups'));
+        $inConfiguredBackups = rtrim($backupDir, '/\\').DIRECTORY_SEPARATOR.ltrim($input, '/\\');
+        if (File::isFile($inConfiguredBackups)) {
+            return $inConfiguredBackups;
         }
 
         $inPrivateBackups = storage_path('app/private/backups/'.ltrim($input, '/\\'));

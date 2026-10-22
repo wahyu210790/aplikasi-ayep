@@ -17,14 +17,14 @@ class BackupProductsCommand extends Command
 
     public function handle(): int
     {
-        $backupDir = storage_path('app/private/backups');
+        $backupDir = (string) config('backup.path', storage_path('app/private/backups'));
 
         if (! File::isDirectory($backupDir)) {
             File::makeDirectory($backupDir, 0755, true);
         }
 
         $now = Carbon::now('Asia/Jakarta');
-        $baseFilename = 'products-'.$now->format('Y-m-d_Hi').'.json';
+        $baseFilename = 'products-'.$now->format('Y-m-d_His').'.json';
         $filePath = $backupDir.DIRECTORY_SEPARATOR.$baseFilename;
 
         $products = Product::with('additionalPrices')
@@ -84,20 +84,22 @@ class BackupProductsCommand extends Command
     }
 
     /**
-     * Simpan hanya 14 file backup terakhir di folder storage/app/private/backups.
+     * Simpan hanya 14 file backup terakhir di folder backup yang dikonfigurasi.
      */
     private function pruneOldBackups(string $backupDir): void
     {
+        $maxKeep = (int) config('backup.max_files', self::MAX_BACKUPS_TO_KEEP);
+
         $files = collect(File::files($backupDir))
             ->filter(fn ($file) => str_starts_with($file->getFilename(), 'products-') && str_ends_with($file->getFilename(), '.json'))
             ->sortByDesc(fn ($file) => $file->getFilename())
             ->values();
 
-        if ($files->count() <= self::MAX_BACKUPS_TO_KEEP) {
+        if ($files->count() <= $maxKeep) {
             return;
         }
 
-        $filesToDelete = $files->slice(self::MAX_BACKUPS_TO_KEEP);
+        $filesToDelete = $files->slice($maxKeep);
         foreach ($filesToDelete as $oldFile) {
             File::delete($oldFile->getPathname());
         }

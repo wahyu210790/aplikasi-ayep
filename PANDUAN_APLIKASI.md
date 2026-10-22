@@ -173,7 +173,7 @@ Harap perhatikan konsekuensi dan batasan keamanan berikut:
 Karena aplikasi tidak menggunakan login dan data dapat diubah/dihapus sewaktu-waktu oleh pengguna yang mengakses URL, aplikasi ini menyediakan fitur **Backup & Restore Otomatis (JSON)** selain backup SQL biasa:
 
 ### A. Backup Otomatis Harian & Backup Manual via Artisan (`backup:products`)
-Aplikasi telah dijadwalkan untuk mengekspor seluruh data tabel `products` dan `product_additional_prices` (termasuk menjaga angka `0` di depan barcode) setiap hari pukul **02:00 WIB (`Asia/Jakarta`)** ke folder privat `storage/app/private/backups/` dengan format nama `products-YYYY-MM-DD_HHMM.json`. Sistem otomatis hanya menyimpan **14 file backup terakhir** dan menghapus file backup yang lebih lama.
+Aplikasi telah dijadwalkan untuk mengekspor seluruh data tabel `products` dan `product_additional_prices` (termasuk menjaga angka `0` di depan barcode) setiap hari pukul **02:00 WIB (`Asia/Jakarta`)** ke folder privat `storage/app/private/backups/` dengan format nama `products-YYYY-MM-DD_HHMMSS.json`. Sistem otomatis hanya menyimpan **14 file backup terakhir** dan menghapus file backup yang lebih lama.
 
 Untuk menjalankan backup secara manual kapan saja:
 ```bash
@@ -181,9 +181,12 @@ php artisan backup:products
 ```
 
 ### B. Cara Memulihkan Data dari File Backup (`restore:products`)
-Untuk memulihkan data dari file backup di `storage/app/private/backups/` (perintah akan meminta konfirmasi terlebih dahulu dan berjalan di dalam transaksi database yang aman):
+Untuk memulihkan data dari file backup di `storage/app/private/backups/` (perintah akan meminta konfirmasi terlebih dahulu, mengembalikan data beserta waktu `created_at` dan `updated_at` asli, serta berjalan di dalam transaksi database yang aman):
 ```bash
-php artisan restore:products products-2026-10-23_0200.json
+php artisan restore:products products-2026-10-23_020000.json
+
+# Atau tambahkan --force jika ingin melewati pertanyaan konfirmasi:
+php artisan restore:products products-2026-10-23_020000.json --force
 ```
 
 ### C. Cara Memasang Cron Job di Server Hosting agar Backup Harian Berjalan Otomatis
