@@ -1,0 +1,593 @@
+/* ==========================================================================
+   Aplikasi Database Harga Barang - Mobile-First Stylesheet
+   Dirancang agar cepat, mudah dibaca di layar HP & nyaman di Desktop.
+   ========================================================================== */
+
+:root {
+    --bg-body: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-subtle: #f1f5f9;
+    --text-main: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --primary: #0284c7;
+    --primary-hover: #0369a1;
+    --primary-light: #e0f2fe;
+    --success: #15803d;
+    --success-bg: #dcfce7;
+    --success-border: #86efac;
+    --warning: #b45309;
+    --warning-bg: #fef3c7;
+    --warning-border: #fde68a;
+    --danger: #dc2626;
+    --danger-hover: #b91c1c;
+    --danger-bg: #fee2e2;
+    --danger-border: #fca5a5;
+    --border-color: #cbd5e1;
+    --border-light: #e2e8f0;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+/* Header & Navigasi */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.brand-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-main);
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background-color: var(--primary);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+/* Tombol Sentuh Besar (Mobile-First >= 46px height) */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 10px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    text-decoration: none;
+    user-select: none;
+}
+
+.btn-sm {
+    min-height: 38px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    border-radius: var(--radius-sm);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: #ffffff;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--primary-hover);
+    color: #ffffff;
+}
+
+.btn-scan {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+    min-height: 54px;
+    font-size: 1.05rem;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-outline {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+.btn-outline:hover {
+    background-color: var(--bg-subtle);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background-color: var(--danger-hover);
+}
+
+.btn-danger-outline {
+    background-color: var(--bg-surface);
+    color: var(--danger);
+    border-color: var(--danger-border);
+}
+
+.btn-danger-outline:hover {
+    background-color: var(--danger-bg);
+}
+
+/* Notifikasi / Alert */
+.alert {
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    border: 1px solid transparent;
+    font-size: 0.95rem;
+}
+
+.alert-success {
+    background-color: var(--success-bg);
+    border-color: var(--success-border);
+    color: var(--success);
+}
+
+.alert-warning {
+    background-color: var(--warning-bg);
+    border-color: var(--warning-border);
+    color: var(--warning);
+}
+
+.alert-danger {
+    background-color: var(--danger-bg);
+    border-color: var(--danger-border);
+    color: var(--danger);
+}
+
+/* Kartu & Panel */
+.card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.card-title {
+    margin: 0 0 12px 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+/* Panel Kamera Scanner */
+.scanner-panel {
+    background-color: #0f172a;
+    color: #f8fafc;
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.scanner-viewport {
+    width: 100%;
+    max-width: 480px;
+    margin: 12px auto;
+    background-color: #1e293b;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    min-height: 220px;
+}
+
+.scanner-status {
+    font-size: 0.92rem;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background-color: rgba(255, 255, 255, 0.1);
+    margin-top: 10px;
+}
+
+/* Form & Input */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.form-hint {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.form-control {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    font-size: 1rem;
+    color: var(--text-main);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    appearance: none;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+}
+
+textarea.form-control {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.input-prefix-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-prefix {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-right: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.input-prefix-group .form-control {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+/* Pencarian & Filter */
+.search-bar-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.search-input-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.search-input-row .form-control {
+    flex: 1 1 0%;
+    min-width: 0;
+}
+
+/* Grid & Kartu Harga Barang */
+.product-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.product-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.product-card-highlight {
+    border: 2px solid var(--primary);
+    background-color: #f0f9ff;
+}
+
+.product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.product-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+    word-break: break-word;
+}
+
+.badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-barcode {
+    background-color: var(--bg-subtle);
+    color: var(--text-main);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    border: 1px solid var(--border-color);
+}
+
+.badge-category {
+    background-color: var(--primary-light);
+    color: var(--primary-hover);
+}
+
+.badge-muted {
+    background-color: var(--bg-subtle);
+    color: var(--text-secondary);
+}
+
+/* Grid Daftar Harga (1 kolom di HP kecil, 2 kolom di layar >= 520px) */
+.price-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+@media (min-width: 520px) {
+    .price-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.price-box {
+    background-color: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    min-width: 0;
+}
+
+.price-box-retail {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+}
+
+.price-label {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 2px;
+}
+
+.price-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    word-break: break-word;
+}
+
+.price-box-retail .price-value {
+    color: #047857;
+    font-size: 1.15rem;
+}
+
+.price-empty {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.92rem;
+    font-style: italic;
+}
+
+/* Daftar Harga Tambahan */
+.additional-prices-section {
+    border-top: 1px dashed var(--border-color);
+    padding-top: 10px;
+}
+
+.additional-prices-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 0 0 8px 0;
+}
+
+.additional-price-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.additional-price-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    gap: 12px;
+}
+
+.additional-price-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.additional-price-val {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--primary-hover);
+    white-space: nowrap;
+}
+
+/* Baris Form Harga Tambahan */
+.additional-form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+}
+
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.card-actions .btn {
+    flex: 1 1 auto;
+}
+
+/* Empty State & Loading */
+.empty-state {
+    text-align: center;
+    padding: 32px 16px;
+}
+
+.empty-state-icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+}
+
+.loading-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--primary-light);
+    color: var(--primary-hover);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+
+.loading-indicator.active {
+    display: flex;
+}
+
+/* Pagination Sederhana */
+.pagination-wrapper {
+    margin-top: 20px;
+}
+
+.pagination-wrapper nav {
+    display: flex;
+    justify-content: center;
+}
+
+/* Responsif Layar Tablet & Desktop */
+@media (min-width: 640px) {
+    .search-bar-stack {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .search-input-row {
+        flex: 1;
+    }
+
+    .price-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .additional-form-row {
+        grid-template-columns: 1.2fr 1fr auto;
+        align-items: center;
+    }
+}
+
+@media (min-width: 820px) {
+    .product-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
