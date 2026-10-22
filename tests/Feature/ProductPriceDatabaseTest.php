@@ -7,7 +7,7 @@ use App\Models\Product;
 use App\Models\ProductAdditionalPrice;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +15,7 @@ use Tests\TestCase;
 
 class ProductPriceDatabaseTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     /**
      * 1. Halaman awal dan kondisi database kosong (Empty State).
