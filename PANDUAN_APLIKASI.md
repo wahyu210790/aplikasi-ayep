@@ -170,19 +170,32 @@ Harap perhatikan konsekuensi dan batasan keamanan berikut:
 
 ## 10. Langkah Backup dan Pemulihan (Restore) Database
 
-Karena aplikasi tidak menggunakan login dan data dapat diubah/dihapus sewaktu-waktu oleh pengguna yang mengakses URL, sangat disarankan melakukan **backup database rutin**:
+Karena aplikasi tidak menggunakan login dan data dapat diubah/dihapus sewaktu-waktu oleh pengguna yang mengakses URL, aplikasi ini menyediakan fitur **Backup & Restore Otomatis (JSON)** selain backup SQL biasa:
 
-### A. Backup melalui phpMyAdmin (di Laragon / cPanel Hosting):
-1. Buka **phpMyAdmin**, lalu klik database **`aplikasi_ayep`** di panel sebelah kiri.
-2. Klik tab **Export (Ekspor)** di bagian atas.
-3. Pilih metode **Quick (Cepat)** dengan format **SQL**, lalu klik **Go (Kirim)**.
-4. Simpan file `.sql` yang terunduh ke tempat penyimpanan yang aman (misalnya Google Drive atau flashdisk).
+### A. Backup Otomatis Harian & Backup Manual via Artisan (`backup:products`)
+Aplikasi telah dijadwalkan untuk mengekspor seluruh data tabel `products` dan `product_additional_prices` (termasuk menjaga angka `0` di depan barcode) setiap hari pukul **02:00 WIB (`Asia/Jakarta`)** ke folder privat `storage/app/private/backups/` dengan format nama `products-YYYY-MM-DD_HHMM.json`. Sistem otomatis hanya menyimpan **14 file backup terakhir** dan menghapus file backup yang lebih lama.
 
-### B. Backup melalui Baris Perintah (CLI):
+Untuk menjalankan backup secara manual kapan saja:
 ```bash
-mysqldump -u username_db -p aplikasi_ayep > backup_aplikasi_ayep_$(date +%F).sql
+php artisan backup:products
 ```
 
-### C. Cara Memulihkan (Restore) Database:
-1. Buka **phpMyAdmin**, pilih database **`aplikasi_ayep`**.
-2. Klik tab **Import (Impor)**, pilih file backup `.sql` terakhir Anda, lalu klik **Go (Kirim)**.
+### B. Cara Memulihkan Data dari File Backup (`restore:products`)
+Untuk memulihkan data dari file backup di `storage/app/private/backups/` (perintah akan meminta konfirmasi terlebih dahulu dan berjalan di dalam transaksi database yang aman):
+```bash
+php artisan restore:products products-2026-10-23_0200.json
+```
+
+### C. Cara Memasang Cron Job di Server Hosting agar Backup Harian Berjalan Otomatis
+Tambahkan baris berikut pada menu **Cron Jobs** di cPanel / server hosting Anda (setiap menit):
+```cron
+* * * * * cd /path/ke/aplikasi && php artisan schedule:run >> /dev/null 2>&1
+```
+
+### D. Backup & Restore Manual melalui phpMyAdmin / MySQL CLI:
+1. **Backup via phpMyAdmin:** Buka database **`aplikasi_ayep`** $\rightarrow$ tab **Export (Ekspor)** $\rightarrow$ metode **Quick (Cepat)** format **SQL** $\rightarrow$ klik **Go (Kirim)**.
+2. **Backup via CLI:**
+   ```bash
+   mysqldump -u username_db -p aplikasi_ayep > backup_aplikasi_ayep_$(date +%F).sql
+   ```
+3. **Restore via phpMyAdmin:** Pilih database **`aplikasi_ayep`** $\rightarrow$ tab **Import (Impor)** $\rightarrow$ pilih file `.sql` $\rightarrow$ klik **Go (Kirim)**.

@@ -5,9 +5,12 @@ namespace Tests\Feature;
 use App\Http\Requests\ProductRequest;
 use App\Models\Product;
 use App\Models\ProductAdditionalPrice;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -521,5 +524,158 @@ class ProductPriceDatabaseTest extends TestCase
         $this->assertFalse(Schema::hasTable('orders'));
         $this->assertFalse(Schema::hasTable('carts'));
         $this->assertFalse(Schema::hasTable('stock_movements'));
+    }
+
+    /**
+     * 16. Backup dan Restore otomatis: membuat file JSON di storage/app/private/backups,
+     * menjaga angka 0 di depan barcode ("0089686010015"), hanya menyimpan 14 file terakhir,
+     * memulihkan data persis sama dengan konfirmasi, serta menolak file rusak tanpa mengubah data.
+     */
+    public function test_backup_and_restore_products_commands_and_schedule(): void
+    {
+        $backupDir = storage_path('app/private/backups');
+        File::deleteDirectory($backupDir);
+
+        try {
+            // Siapkan data awal termasuk barcode dengan angka 0 di depan dan harga tambahan
+            $p1 = Product::create([
+                'name' => 'Indomie Goreng Spesial',
+                'barcode' => '0089686010015',
+                'category' => 'Mie Instan',
+                'cost_price' => '3000.00',
+                'supplier_price' => '3200.00',
+                'retail_price' => '3500.00',
+                'processed_price' => '7000.00',
+                'notes' => 'Bisa dimasak pakai telur',
+            ]);
+            $p1->additionalPrices()->create([
+                'label' => 'Harga 1 Dus (40 bks)',
+                'price' => '124000.00',
+                'sort_order' => 1,
+            ]);
+
+            $p2 = Product::create([
+                'name' => 'Gula Pasir Curah 1 Kg',
+                'barcode' => null,
+                'category' => 'Sembako',
+                'cost_price' => '0.00',
+                'supplier_price' => null,
+                'retail_price' => '17500.00',
+                'processed_price' => null,
+                'notes' => null,
+            ]);
+
+            // Uji rotasi 14 file backup: jalankan 16 kali pada waktu berbeda
+            $baseTime = Carbon::create(2026, 10, 10, 2, 0, 0, 'Asia/Jakarta');
+            for ($day = 1; $day <= 16; $day++) {
+                Carbon::setTestNow($baseTime->copy()->addDays($day));
+                $this->artisan('backup:products')->assertExitCode(0);
+            }
+            Carbon::setTestNow();
+
+            $files = collect(File::files($backupDir))
+                ->filter(fn ($f) => str_starts_with($f->getFilename(), 'products-') && str_ends_with($f->getFilename(), '.json'))
+                ->sortBy(fn ($f) => $f->getFilename())
+                ->values();
+
+            // Hanya 14 file terakhir yang disimpan (hari ke-1 dan ke-2 terhapus otomatis)
+            $this->assertCount(14, $files);
+            $this->assertSame('products-2026-10-13_0200.json', $files->first()->getFilename());
+            $latestBackupFile = $files->last();
+            $this->assertSame('products-2026-10-26_0200.json', $latestBackupFile->getFilename());
+
+            // Pastikan tidak ada file backup di folder public
+            $this->assertDirectoryDoesNotExist(public_path('backups'));
+
+            // Periksa isi file JSON dan keutuhan barcode "0089686010015"
+            $rawJson = File::get($latestBackupFile->getPathname());
+            $this->assertStringContainsString('"barcode": "0089686010015"', $rawJson);
+
+            $decoded = json_decode($rawJson, true);
+            $this->assertSame('aplikasi-ayep-products-backup', $decoded['format']);
+            $this->assertSame(2, $decoded['products_count']);
+            $this->assertSame('0089686010015', $decoded['products'][0]['barcode']);
+            $this->assertSame('Harga 1 Dus (40 bks)', $decoded['products'][0]['additional_prices'][0]['label']);
+            $this->assertSame('124000.00', $decoded['products'][0]['additional_prices'][0]['price']);
+
+            // Ubah/hapus data di database, lalu uji penolakan file rusak terlebih dahulu
+            ProductAdditionalPrice::query()->delete();
+            Product::query()->delete();
+            $tempExisting = Product::create([
+                'name' => 'Data Sementara Sebelum Restore',
+                'barcode' => '999000111',
+                'retail_price' => '10000.00',
+            ]);
+
+            $corruptedPath = $backupDir.DIRECTORY_SEPARATOR.'corrupted.json';
+            File::put($corruptedPath, '{broken-json-content');
+
+            $this->artisan('restore:products', ['file' => 'corrupted.json'])
+                ->assertExitCode(1);
+
+            // Data lama tidak boleh berubah ketika file backup rusak
+            $this->assertDatabaseHas('products', [
+                'id' => $tempExisting->id,
+                'name' => 'Data Sementara Sebelum Restore',
+                'barcode' => '999000111',
+            ]);
+
+            // Uji jika struktur JSON salah (misal barcode negatif/harga tidak valid)
+            $invalidPayloadPath = $backupDir.DIRECTORY_SEPARATOR.'invalid-structure.json';
+            File::put($invalidPayloadPath, json_encode([
+                'format' => 'aplikasi-ayep-products-backup',
+                'products' => [
+                    ['name' => 'Barang Rusak', 'retail_price' => '-5000'],
+                ],
+            ]));
+
+            $this->artisan('restore:products', ['file' => $invalidPayloadPath])
+                ->assertExitCode(1);
+
+            $this->assertDatabaseHas('products', [
+                'id' => $tempExisting->id,
+                'name' => 'Data Sementara Sebelum Restore',
+            ]);
+
+            // Uji jika konfirmasi dijawab "no" -> dibatalkan dan data lama tidak berubah
+            $this->artisan('restore:products', ['file' => $latestBackupFile->getFilename()])
+                ->expectsConfirmation('PERINGATAN: Proses restore akan mengganti seluruh data barang saat ini dengan data dari file backup. Lanjutkan?', 'no')
+                ->assertExitCode(1);
+
+            $this->assertDatabaseHas('products', ['name' => 'Data Sementara Sebelum Restore']);
+
+            // Sekarang uji restore dengan konfirmasi "yes" -> data kembali persis seperti semula
+            $this->artisan('restore:products', ['file' => $latestBackupFile->getFilename()])
+                ->expectsConfirmation('PERINGATAN: Proses restore akan mengganti seluruh data barang saat ini dengan data dari file backup. Lanjutkan?', 'yes')
+                ->assertExitCode(0);
+
+            $this->assertDatabaseMissing('products', ['name' => 'Data Sementara Sebelum Restore']);
+            $this->assertSame(2, Product::count());
+
+            $restoredP1 = Product::with('additionalPrices')->where('barcode', '0089686010015')->first();
+            $this->assertNotNull($restoredP1);
+            $this->assertSame('Indomie Goreng Spesial', $restoredP1->name);
+            $this->assertSame('0089686010015', $restoredP1->barcode);
+            $this->assertSame('3500.00', $restoredP1->retail_price);
+            $this->assertCount(1, $restoredP1->additionalPrices);
+            $this->assertSame('Harga 1 Dus (40 bks)', $restoredP1->additionalPrices->first()->label);
+            $this->assertSame('124000.00', $restoredP1->additionalPrices->first()->price);
+
+            $restoredP2 = Product::where('name', 'Gula Pasir Curah 1 Kg')->first();
+            $this->assertNotNull($restoredP2);
+            $this->assertNull($restoredP2->barcode);
+            $this->assertSame('0.00', $restoredP2->cost_price);
+            $this->assertNull($restoredP2->supplier_price);
+
+            // Verifikasi jadwal scheduler harian jam 02:00 Asia/Jakarta
+            $schedule = app(Schedule::class);
+            $backupEvent = collect($schedule->events())->first(fn ($event) => str_contains((string) $event->command, 'backup:products'));
+            $this->assertNotNull($backupEvent);
+            $this->assertSame('0 2 * * *', $backupEvent->expression);
+            $this->assertSame('Asia/Jakarta', (string) $backupEvent->timezone);
+        } finally {
+            Carbon::setTestNow();
+            File::deleteDirectory($backupDir);
+        }
     }
 }
